@@ -1,4 +1,4 @@
-package exception;
+package sudokuException;
 
 public class SudokuCanNotSolvedExpection extends RuntimeException{
     public SudokuCanNotSolvedExpection(String message) {

@@ -1,7 +1,5 @@
-package exception;
+package sudokuException;
 
-
-import java.util.zip.CheckedInputStream;
 
 public class NotValidSudokuException extends Exception {
     public NotValidSudokuException(String message) {

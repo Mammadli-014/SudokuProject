@@ -82,7 +82,7 @@ public class Sudoku9x9 extends Sudoku {
     }
 
     @Override
-    boolean isTrue() {
+    public boolean isTrue() {
         return super.isTrue() && are3x3BlocksValid();
     }
 

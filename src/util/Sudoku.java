@@ -3,6 +3,7 @@ package util;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import sudokuException.InvalidNumberException;
 import sudokuException.NotValidSudokuException;
 import sudokuException.SudokuCanNotSolvedExpection;
 
@@ -10,14 +11,14 @@ public class Sudoku {
     private int[][] values;
     protected int sudokuSize;
     protected int[][][] suitables = new int[9][9][0];
-    private static final int MAX_ITERATIONS = 2000; // Iteration limit
+    private static final int MAX_ITERATIONS = 20_000; // Iteration limit
 
     Sudoku(int[][] values) {
         this.values = values;
         try {
             check();
-        } catch (NotValidSudokuException e) {
-            System.out.println(e.getMessage());
+        } catch (NotValidSudokuException | InvalidNumberException exception) {
+            System.err.println(exception.getMessage());
             System.exit(0);
         }
         sudokuSize = values.length;
@@ -26,28 +27,40 @@ public class Sudoku {
     public void solve() {
         int iterations = 0;
 
-        while (!isSolved(values) && isTrue()) {
+        while (!isSolved(values)) {
             changeOptional();
             changeLogicalOption();
-            changeLogicalOption();
+            int[][] tryed = sudokuClone(values);
 
+            if (Arrays.deepEquals(tryed, values) && !isSolved(values)) values = tryToSolve(values);
 
-            int[][] tryed = values.clone();
-
-            if (Arrays.deepEquals(tryed, values)) {
-                SudokuClone s = new SudokuClone(this.values);
-                this.values = s.tryToSolve();
-            }
             iterations++;
             if (iterations == MAX_ITERATIONS) {
                 write();
                 throw new SudokuCanNotSolvedExpection("Sudoku is not solvable");
             }
-
-
         }
+        System.out.println("\033[0;32m" + "Sudokunuz basariyla cozuldu!" + "\033[0m");
 
+    }
+    int[][] tryToSolve(int[][] values) {
+        for (int i = 0; i < sudokuSize; i++) {
+            for (int j = 0; j < sudokuSize; j++) {
+                if (values[i][j] == 0) {
+                    int[] suitableNumbersForSpecialPlace = findSuitableNumbers(i, j);
+                    for (int k : suitableNumbersForSpecialPlace) {
+                        values[i][j] = k;
+                        if (isTrue()) {
+                            if (isSolved(values)) return values;
+                            int[][] result = tryToSolve(values);
+                            if (isSolved(result)) return result;
 
+                        } else values[i][j] = 0;
+                    }
+                }
+            }
+        }
+        return values;
     }
 
     int[] findSuitableNumbers(int line, int column) {//3,2
@@ -106,40 +119,35 @@ public class Sudoku {
                                     if (z != column)
                                         for (int a : suitables[row][z]) {
                                             if (k == a) {
-                                                changeMade = false;
                                                 continue LOOP1;
                                             }
                                         }
                                     if (z != row)
                                         for (int a : suitables[z][column]) {
                                             if (k == a) {
-                                                changeMade = false;
                                                 continue LOOP1;
                                             }
                                         }
                                 }
-                                if (changeMade) {
                                     change(row, column, k);
                                     return;
-                                }
                             }
             }
         }
     }
 
     protected void change(int line, int column, int num) {
-        if (values[line][column] == 0) values[line][column] = num;
+        if (this.values[line][column] == 0) this.values[line][column] = num;
     }
 
-    boolean isSolved(int [][] values) {
+    public boolean isSolved(int[][] values) {
         for (int[] i : values)
             for (int j : i)
                 if (j == 0) return false;
-
         return isTrue();
     }
 
-    boolean isTrue() {
+    public boolean isTrue() {
         return areColumnsValid() && areRowsValid();
     }
 
@@ -196,10 +204,27 @@ public class Sudoku {
         System.out.println();
     }
 
-    private void check() throws NotValidSudokuException {
-        for (int i = 0; i < values.length; i++) {
+    private int [][] sudokuClone(int [][] values){
+        int [][] cloned=new int [sudokuSize][sudokuSize];
+
+        for (int i=0;i<sudokuSize;i++){
+            for (int j=0;j<sudokuSize;j++){
+                cloned[i][j]=values[i][j];
+            }
+        }
+        return cloned;
+    }
+
+    private void check() throws NotValidSudokuException,InvalidNumberException {
+            for (int i = 0; i < values.length; i++) {
             if (values.length != values[i].length) throw new NotValidSudokuException("Sudokunun olculeri dogru deyil!");
         }
+            ArrayList <Integer> legalNumbers=new ArrayList<>();
+            for (int i=0;i<=9;i++) legalNumbers.add(i);
+            for (int [] i:values){
+                for (int j:i)if (!legalNumbers.contains(j)) throw new InvalidNumberException("Sudokuya uygun olmayan eded daxil edildi");
+
+            }
     }
 
 }

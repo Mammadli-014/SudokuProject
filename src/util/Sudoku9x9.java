@@ -82,11 +82,11 @@ public class Sudoku9x9 extends Sudoku {
     }
 
     @Override
-    public boolean isTrue() {
-        return super.isTrue() && are3x3BlocksValid();
+    public boolean isTrue(int [][] values) {
+        return super.isTrue(values) && are3x3BlocksValid(values);
     }
 
-    private boolean are3x3BlocksValid() {
+    private boolean are3x3BlocksValid(int [][] values) {
         for (int k = 0; k < 3; k++) {
             for (int y = 0; y < 3; y++) {
                 int[][] detail = new int[3][3];

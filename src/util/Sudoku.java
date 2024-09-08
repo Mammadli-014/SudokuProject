@@ -11,7 +11,7 @@ public class Sudoku {
     private int[][] values;
     protected int sudokuSize;
     protected int[][][] suitables = new int[9][9][0];
-    private static final int MAX_ITERATIONS = 20_000; // Iteration limit
+    private static final int MAX_ITERATIONS = 2; // Iteration limit
 
     Sudoku(int[][] values) {
         this.values = values;
@@ -26,41 +26,43 @@ public class Sudoku {
 
     public void solve() {
         int iterations = 0;
-
         while (!isSolved(values)) {
             changeOptional();
             changeLogicalOption();
-            int[][] tryed = sudokuClone(values);
 
-            if (Arrays.deepEquals(tryed, values) && !isSolved(values)) values = tryToSolve(values);
+            int [][] copiedArray=sudokuClone(values);
+            changeLogicalOption();
+
+            if (Arrays.deepEquals(copiedArray, values) && !isSolved(values)) {
+                SudokuTry s = new SudokuTry(values);
+                s.tryToSolve(values);
+                values=s.solved;
+            }
 
             iterations++;
             if (iterations == MAX_ITERATIONS) {
                 write();
                 throw new SudokuCanNotSolvedExpection("Sudoku is not solvable");
             }
+
         }
         System.out.println("\033[0;32m" + "Sudokunuz basariyla cozuldu!" + "\033[0m");
 
     }
-    int[][] tryToSolve(int[][] values) {
-        for (int i = 0; i < sudokuSize; i++) {
-            for (int j = 0; j < sudokuSize; j++) {
-                if (values[i][j] == 0) {
-                    int[] suitableNumbersForSpecialPlace = findSuitableNumbers(i, j);
-                    for (int k : suitableNumbersForSpecialPlace) {
-                        values[i][j] = k;
-                        if (isTrue()) {
-                            if (isSolved(values)) return values;
-                            int[][] result = tryToSolve(values);
-                            if (isSolved(result)) return result;
 
-                        } else values[i][j] = 0;
-                    }
-                }
-            }
-        }
-        return values;
+    void check(int[][] values) {
+        int[][] a = {
+                {5, 8, 6, 3, 2, 7, 4, 9, 1},
+                {7, 2, 4, 8, 9, 1, 6, 3, 5},
+                {1, 9, 3, 5, 4, 6, 7, 8, 2},
+                {2, 4, 5, 9, 3, 8, 1, 7, 6},
+                {8, 6, 7, 2, 1, 4, 3, 5, 9},
+                {9, 3, 1, 6, 7, 5, 8, 2, 4},
+                {4, 5, 2, 7, 6, 3, 9, 1, 8},
+                {3, 1, 9, 4, 8, 2, 5, 6, 7},
+                {6, 7, 8, 1, 5, 9, 2, 4, 3}};
+
+        if (Arrays.deepEquals(values, a)) System.out.println("eynilesdi");
     }
 
     int[] findSuitableNumbers(int line, int column) {//3,2
@@ -129,8 +131,8 @@ public class Sudoku {
                                             }
                                         }
                                 }
-                                    change(row, column, k);
-                                    return;
+                                change(row, column, k);
+                                return;
                             }
             }
         }
@@ -144,14 +146,14 @@ public class Sudoku {
         for (int[] i : values)
             for (int j : i)
                 if (j == 0) return false;
-        return isTrue();
+        return isTrue(values);
     }
 
-    public boolean isTrue() {
-        return areColumnsValid() && areRowsValid();
+    public boolean isTrue(int [][] values) {
+        return areColumnsValid(values) && areRowsValid(values);
     }
 
-    private boolean areRowsValid() {
+    private boolean areRowsValid(int [][] values) {
         for (int i = 0; i < sudokuSize; i++) {
             ArrayList<Integer> a = new ArrayList<>();
             for (int j = 0; j < sudokuSize; j++) {
@@ -162,7 +164,7 @@ public class Sudoku {
         return true;
     }
 
-    private boolean areColumnsValid() {
+    private boolean areColumnsValid(int [][] values) {
         for (int i = 0; i < sudokuSize; i++) {
             ArrayList<Integer> a = new ArrayList<>();
             for (int j = 0; j < sudokuSize; j++) {
@@ -204,27 +206,26 @@ public class Sudoku {
         System.out.println();
     }
 
-    private int [][] sudokuClone(int [][] values){
-        int [][] cloned=new int [sudokuSize][sudokuSize];
-
-        for (int i=0;i<sudokuSize;i++){
-            for (int j=0;j<sudokuSize;j++){
-                cloned[i][j]=values[i][j];
+    protected int[][] sudokuClone(int[][] values) {
+            int[][] copy = new int[values.length][values[0].length];
+            for (int i = 0; i < values.length; i++) {
+                System.arraycopy(values[i], 0, copy[i], 0, values[i].length);
             }
-        }
-        return cloned;
+            return copy;
     }
 
-    private void check() throws NotValidSudokuException,InvalidNumberException {
-            for (int i = 0; i < values.length; i++) {
+    private void check() throws NotValidSudokuException, InvalidNumberException {
+        for (int i = 0; i < values.length; i++) {
             if (values.length != values[i].length) throw new NotValidSudokuException("Sudokunun olculeri dogru deyil!");
         }
-            ArrayList <Integer> legalNumbers=new ArrayList<>();
-            for (int i=0;i<=9;i++) legalNumbers.add(i);
-            for (int [] i:values){
-                for (int j:i)if (!legalNumbers.contains(j)) throw new InvalidNumberException("Sudokuya uygun olmayan eded daxil edildi");
+        ArrayList<Integer> legalNumbers = new ArrayList<>();
+        for (int i = 0; i <= 9; i++) legalNumbers.add(i);
+        for (int[] i : values) {
+            for (int j : i)
+                if (!legalNumbers.contains(j))
+                    throw new InvalidNumberException("Sudokuya uygun olmayan eded daxil edildi");
 
-            }
+        }
     }
 
 }

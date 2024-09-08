@@ -1,64 +1,69 @@
 package util;
 
-
 import java.util.ArrayList;
 
+// Class for handling 9x9 Sudoku puzzles, extending the base Sudoku class
 public class Sudoku9x9 extends Sudoku {
-    private int[][] values;
+    private int[][] values; // array to store Sudoku grid values
 
     public Sudoku9x9(int[][] values) {
         super(values);
         this.values = values;
     }
 
+    // Method to change logical options based on Sudoku rules
     @Override
-    void changeLogicalOption() {
-        findBestSuitableNumber();
+    protected void applyLogicalMove() {
+        findSuitableNumbersForSpecialArea(); // Find the best suitable numbers for empty cells
         for (int row = 0; row < sudokuSize; row++) {
             for (int column = 0; column < sudokuSize; column++) {
 
-                if (values[row][column] == 0)
+                if (values[row][column] == 0) // If the cell is empty
                     LOOP1:
-                            for (int k : suitables[row][column]) {
+                            for (int k : suitables[row][column]) { // Iterate through possible values
+                                // Check if value k is already present in the same row
                                 for (int z = 0; z < sudokuSize; z++) {
                                     if (z != column)
                                         for (int a : suitables[row][z]) {
                                             if (k == a) continue LOOP1;
-
                                         }
+                                    // Check if value k is already present in the same column
                                     if (z != row)
                                         for (int a : suitables[z][column]) {
                                             if (k == a) continue LOOP1;
-
                                         }
                                 }
+                                // Check if value k is already present in the 3x3 block
                                 for (int x = (row / 3) * 3; x < (row / 3) * 3 + 3; x++) {
                                     for (int y = (column / 3) * 3; y < (column / 3) * 3 + 3; y++) {
-                                        for (int a:suitables[x][y]) if (k==a) continue LOOP1;
+                                        for (int a : suitables[x][y]) if (k == a) continue LOOP1;
                                     }
                                 }
-                                change(row, column, k);
+                                change(row, column, k); // Update cell with the valid value k
                             }
             }
         }
     }
 
+    // Method to find suitable numbers for a specific cell
     @Override
-    int[] findSuitableNumbers(int row, int column) {//3,2
+    protected int[] findSuitableNumbersForSpecialArea(int row, int column) {
         ArrayList<Integer> counts = new ArrayList<>();
+        // Check row and column for existing numbers
         for (int i = 0; i < values.length; i++) {
             if ((!counts.contains(values[row][i])) && values[row][i] != 0) counts.add(values[row][i]);
             if ((!counts.contains(values[i][column])) && values[i][column] != 0) counts.add(values[i][column]);
         }
 
+        // Check 3x3 block for existing numbers
         for (int k = (row / 3) * 3; k < (row / 3) * 3 + 3; k++) {
             for (int y = (column / 3) * 3; y < (column / 3) * 3 + 3; y++) {
-
                 if ((!counts.contains(values[k][y])) && values[k][y] != 0)
                     counts.add(values[k][y]);
             }
         }
 
+        // Determine the suitable numbers that are not already present
         int[] suitable = new int[0];
         for (int i = 1; i <= values.length; i++) {
             if (!counts.contains(i)) {
@@ -69,32 +74,36 @@ public class Sudoku9x9 extends Sudoku {
             }
         }
 
-
         return suitable;
     }
 
+    // Method to find suitable numbers for all empty cells
     @Override
-    void findBestSuitableNumber() {
+    protected void findSuitableNumbersForSpecialArea() {
         suitables = new int[sudokuSize][sudokuSize][0];
         for (int i = 0; i < sudokuSize; i++)
             for (int j = 0; j < sudokuSize; j++)
-                if (values[i][j] == 0) suitables[i][j] = findSuitableNumbers(i, j);
+                if (values[i][j] == 0) suitables[i][j] = findSuitableNumbersForSpecialArea(i, j);
     }
 
+    // Method to check if the Sudoku grid is valid
     @Override
-    public boolean isTrue(int [][] values) {
+    protected boolean isTrue(int[][] values) {
         return super.isTrue(values) && are3x3BlocksValid(values);
     }
 
-    private boolean are3x3BlocksValid(int [][] values) {
+    // Method to validate the 3x3 blocks in the Sudoku grid
+    private boolean are3x3BlocksValid(int[][] values) {
         for (int k = 0; k < 3; k++) {
             for (int y = 0; y < 3; y++) {
                 int[][] detail = new int[3][3];
+                // Extract the 3x3 block
                 for (int i = 0; i < 3; i++) {
                     for (int j = 0; j < 3; j++) {
                         detail[i][j] = values[k * 3 + i][y * 3 + j];
                     }
                 }
+                // Check for duplicate numbers within the 3x3 block
                 for (int i = 0; i < detail.length; i++) {
                     ArrayList<Integer> a = new ArrayList<>();
                     for (int j = 0; j < detail[i].length; j++) {
@@ -102,7 +111,6 @@ public class Sudoku9x9 extends Sudoku {
                         else a.add(values[i][j]);
                     }
                 }
-
             }
         }
         return true;
